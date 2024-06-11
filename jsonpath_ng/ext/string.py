@@ -12,6 +12,9 @@
 # under the License.
 
 import re
+
+from typing import Any, List
+
 from .. import DatumInContext, This
 
 
@@ -30,7 +33,7 @@ class Sub(This):
     Concrete syntax is '`sub(/regex/, repl)`'
     """
 
-    def __init__(self, method=None):
+    def __init__(self, method: str):
         m = SUB.match(method)
         if m is None:
             raise DefintionInvalid("%s is not valid" % method)
@@ -39,7 +42,7 @@ class Sub(This):
         self.regex = re.compile(self.expr)
         self.method = method
 
-    def find(self, datum):
+    def find(self, datum) -> List[DatumInContext]:
         datum = DatumInContext.wrap(datum)
         value = self.regex.sub(self.repl, datum.value)
         if value == datum.value:
@@ -47,13 +50,13 @@ class Sub(This):
         else:
             return [DatumInContext.wrap(value)]
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return (isinstance(other, Sub) and self.method == other.method)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '%s(%r)' % (self.__class__.__name__, self.method)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '`sub(/%s/, %s)`' % (self.expr, self.repl)
 
 
@@ -63,7 +66,7 @@ class Split(This):
     Concrete syntax is '`split(char, segment, max_split)`'
     """
 
-    def __init__(self, method=None):
+    def __init__(self, method: str):
         m = SPLIT.match(method)
         if m is None:
             raise DefintionInvalid("%s is not valid" % method)
@@ -72,7 +75,7 @@ class Split(This):
         self.max_split = int(m.group(3))
         self.method = method
 
-    def find(self, datum):
+    def find(self, datum) -> List[DatumInContext]:
         datum = DatumInContext.wrap(datum)
         try:
             value = datum.value.split(self.char, self.max_split)[self.segment]
@@ -80,13 +83,13 @@ class Split(This):
             return []
         return [DatumInContext.wrap(value)]
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return (isinstance(other, Split) and self.method == other.method)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '%s(%r)' % (self.__class__.__name__, self.method)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '`%s`' % self.method
 
 
@@ -96,22 +99,22 @@ class Str(This):
     Concrete syntax is '`str()`'
     """
 
-    def __init__(self, method=None):
+    def __init__(self, method: str):
         m = STR.match(method)
         if m is None:
             raise DefintionInvalid("%s is not valid" % method)
         self.method = method
 
-    def find(self, datum):
+    def find(self, datum) -> List[DatumInContext]:
         datum = DatumInContext.wrap(datum)
         value = str(datum.value)
         return [DatumInContext.wrap(value)]
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return (isinstance(other, Str) and self.method == other.method)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '%s(%r)' % (self.__class__.__name__, self.method)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '`str()`'

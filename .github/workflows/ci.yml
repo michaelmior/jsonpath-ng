@@ -32,3 +32,5 @@ jobs:
         pip install -r requirements-dev.txt
     - name: Run tests
       run: tox run -e py${{ matrix.python-version }}
+    - name: Type checking
+      run: mypy -p jsonpath_ng --warn-unused-configs --python-version=${{ matrix.python-version }}

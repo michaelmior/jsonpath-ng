@@ -1,6 +1,7 @@
 import sys
 import logging
 
+from ply.lex import LexToken
 import ply.lex
 
 from jsonpath_ng.exceptions import JsonPathLexerError
@@ -18,7 +19,7 @@ class JsonPathLexer:
         if self.__doc__ is None:
             raise JsonPathLexerError('Docstrings have been removed! By design of PLY, jsonpath-rw requires docstrings. You must not use PYTHONOPTIMIZE=2 or python -OO.')
 
-    def tokenize(self, string):
+    def tokenize(self, string: str):
         '''
         Maps a string to an iterator over tokens. In other words: [char] -> [token]
         '''
@@ -60,12 +61,12 @@ class JsonPathLexer:
     t_DOUBLEDOT = r'\.\.'
     t_ignore = ' \t'
 
-    def t_ID(self, t):
+    def t_ID(self, t: LexToken):
         r'[a-zA-Z_@][a-zA-Z0-9_@\-]*'
-        t.type = self.reserved_words.get(t.value, 'ID')
+        t.type = self.reserved_words.get(str(t.value), 'ID')
         return t
 
-    def t_NUMBER(self, t):
+    def t_NUMBER(self, t: LexToken):
         r'-?\d+'
         t.value = int(t.value)
         return t
@@ -73,96 +74,105 @@ class JsonPathLexer:
 
     # Single-quoted strings
     t_singlequote_ignore = ''
-    def t_singlequote(self, t):
+    def t_singlequote(self, t: LexToken):
         r"'"
         t.lexer.string_start = t.lexer.lexpos
         t.lexer.string_value = ''
         t.lexer.push_state('singlequote')
 
-    def t_singlequote_content(self, t):
+    def t_singlequote_content(self, t: LexToken):
         r"[^'\\]+"
-        t.lexer.string_value += t.value
+        assert t.lexer.string_value is not None
+        t.lexer.string_value += str(t.value)
 
-    def t_singlequote_escape(self, t):
+    def t_singlequote_escape(self, t: LexToken):
         r'\\.'
-        t.lexer.string_value += t.value[1]
+        assert t.lexer.string_value is not None
+        t.lexer.string_value += str(t.value)[1]
 
-    def t_singlequote_end(self, t):
+    def t_singlequote_end(self, t: LexToken):
         r"'"
+        assert t.lexer.string_value is not None
         t.value = t.lexer.string_value
         t.type = 'ID'
         t.lexer.string_value = None
         t.lexer.pop_state()
         return t
 
-    def t_singlequote_error(self, t):
-        raise JsonPathLexerError('Error on line %s, col %s while lexing singlequoted field: Unexpected character: %s ' % (t.lexer.lineno, t.lexpos - t.lexer.latest_newline, t.value[0]))
+    def t_singlequote_error(self, t: LexToken):
+        raise JsonPathLexerError('Error on line %s, col %s while lexing singlequoted field: Unexpected character: %s ' % (t.lexer.lineno, t.lexpos - t.lexer.latest_newline, str(t.value)[0]))
 
 
     # Double-quoted strings
     t_doublequote_ignore = ''
-    def t_doublequote(self, t):
+    def t_doublequote(self, t: LexToken):
         r'"'
         t.lexer.string_start = t.lexer.lexpos
         t.lexer.string_value = ''
         t.lexer.push_state('doublequote')
 
-    def t_doublequote_content(self, t):
+    def t_doublequote_content(self, t: LexToken):
         r'[^"\\]+'
-        t.lexer.string_value += t.value
+        assert t.lexer.string_value is not None
+        t.lexer.string_value += str(t.value)
 
-    def t_doublequote_escape(self, t):
+    def t_doublequote_escape(self, t: LexToken):
         r'\\.'
-        t.lexer.string_value += t.value[1]
+        assert t.lexer.string_value is not None
+        t.lexer.string_value += str(t.value)[1]
 
-    def t_doublequote_end(self, t):
+    def t_doublequote_end(self, t: LexToken):
         r'"'
+        assert t.lexer.string_value is not None
         t.value = t.lexer.string_value
         t.type = 'ID'
         t.lexer.string_value = None
         t.lexer.pop_state()
         return t
 
-    def t_doublequote_error(self, t):
-        raise JsonPathLexerError('Error on line %s, col %s while lexing doublequoted field: Unexpected character: %s ' % (t.lexer.lineno, t.lexpos - t.lexer.latest_newline, t.value[0]))
+    def t_doublequote_error(self, t: LexToken):
+        raise JsonPathLexerError('Error on line %s, col %s while lexing doublequoted field: Unexpected character: %s ' % (t.lexer.lineno, t.lexpos - t.lexer.latest_newline, str(t.value)[0]))
 
 
     # Back-quoted "magic" operators
     t_backquote_ignore = ''
-    def t_backquote(self, t):
+    def t_backquote(self, t: LexToken):
         r'`'
         t.lexer.string_start = t.lexer.lexpos
         t.lexer.string_value = ''
         t.lexer.push_state('backquote')
 
-    def t_backquote_escape(self, t):
+    def t_backquote_escape(self, t: LexToken):
         r'\\.'
-        t.lexer.string_value += t.value[1]
+        assert t.lexer.string_value is not None
+        t.lexer.string_value += str(t.value)[1]
 
-    def t_backquote_content(self, t):
+    def t_backquote_content(self, t: LexToken):
         r"[^`\\]+"
-        t.lexer.string_value += t.value
+        assert t.lexer.string_value is not None
+        t.lexer.string_value += str(t.value)
 
-    def t_backquote_end(self, t):
+    def t_backquote_end(self, t: LexToken):
         r'`'
+        assert t.lexer.string_value is not None
         t.value = t.lexer.string_value
         t.type = 'NAMED_OPERATOR'
         t.lexer.string_value = None
         t.lexer.pop_state()
         return t
 
-    def t_backquote_error(self, t):
-        raise JsonPathLexerError('Error on line %s, col %s while lexing backquoted operator: Unexpected character: %s ' % (t.lexer.lineno, t.lexpos - t.lexer.latest_newline, t.value[0]))
+    def t_backquote_error(self, t: LexToken):
+        raise JsonPathLexerError('Error on line %s, col %s while lexing backquoted operator: Unexpected character: %s ' % (t.lexer.lineno, t.lexpos - t.lexer.latest_newline, str(t.value)[0]))
 
 
     # Counting lines, handling errors
-    def t_newline(self, t):
+    def t_newline(self, t: LexToken):
         r'\n'
         t.lexer.lineno += 1
         t.lexer.latest_newline = t.lexpos
 
-    def t_error(self, t):
-        raise JsonPathLexerError('Error on line %s, col %s: Unexpected character: %s ' % (t.lexer.lineno, t.lexpos - t.lexer.latest_newline, t.value[0]))
+    def t_error(self, t: LexToken):
+        raise JsonPathLexerError('Error on line %s, col %s: Unexpected character: %s ' % (t.lexer.lineno, t.lexpos - t.lexer.latest_newline, str(t.value)[0]))
 
 if __name__ == '__main__':
     logging.basicConfig()

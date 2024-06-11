@@ -12,7 +12,13 @@
 # under the License.
 
 import functools
+
+from typing import Any, List, Literal, Union
+
 from .. import This, DatumInContext, JSONPath
+
+
+CompareResult = Union[Literal[0], Literal[-1], Literal[1]]
 
 
 class SortedThis(This):
@@ -23,7 +29,7 @@ class SortedThis(This):
     def __init__(self, expressions=None):
         self.expressions = expressions
 
-    def _compare(self, left, right):
+    def _compare(self, left, right) -> CompareResult:
         left = DatumInContext.wrap(left)
         right = DatumInContext.wrap(right)
 
@@ -43,25 +49,26 @@ class SortedThis(This):
                 return -1 if reverse else 1
         return 0
 
-    def find(self, datum):
+    def find(self, datum) -> List[DatumInContext]:
         """Return sorted value of This if list or dict."""
         if isinstance(datum.value, dict) and self.expressions:
-            return datum
+            return [datum]
 
         if isinstance(datum.value, dict) or isinstance(datum.value, list):
             key = (functools.cmp_to_key(self._compare)
                    if self.expressions else None)
             return [DatumInContext.wrap(
                 [value for value in sorted(datum.value, key=key)])]
-        return datum
 
-    def __eq__(self, other):
+        return [datum]
+
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, Len)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '%s(%r)' % (self.__class__.__name__, self.expressions)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '[?%s]' % self.expressions
 
 
@@ -71,7 +78,7 @@ class Len(JSONPath):
     Concrete syntax is '`len`'.
     """
 
-    def find(self, datum):
+    def find(self, datum) -> List[DatumInContext]:
         datum = DatumInContext.wrap(datum)
         try:
             value = len(datum.value)
@@ -82,13 +89,13 @@ class Len(JSONPath):
                                                context=None,
                                                path=Len())]
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, Len)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '`len`'
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Len()'
 
 
@@ -97,7 +104,7 @@ class Keys(JSONPath):
     Concrete syntax is '`keys`'.
     """
 
-    def find(self, datum):
+    def find(self, datum) -> List[DatumInContext]:
         datum = DatumInContext.wrap(datum)
         try:
             value = list(datum.value.keys())
@@ -108,11 +115,11 @@ class Keys(JSONPath):
                                                context=None,
                                                path=Keys()) for i in range (0, len(datum.value))]
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return isinstance(other, Keys)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '`keys`'
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'Keys()'

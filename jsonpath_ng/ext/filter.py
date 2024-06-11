@@ -14,6 +14,8 @@
 import operator
 import re
 
+from typing import Any, List, Optional
+
 from .. import JSONPath, DatumInContext, Index
 
 
@@ -35,14 +37,14 @@ class Filter(JSONPath):
     def __init__(self, expressions):
         self.expressions = expressions
 
-    def find(self, datum):
+    def find(self, datum) -> List[DatumInContext]:
         if not self.expressions:
-            return datum
+            return [datum]
 
         datum = DatumInContext.wrap(datum)
 
         if isinstance(datum.value, dict):
-            datum.value = list(datum.value.values())
+            datum.value = [DatumInContext.wrap(v) for v in datum.value.values()]
 
         if not isinstance(datum.value, list):
             return []
@@ -73,14 +75,14 @@ class Filter(JSONPath):
                     else:
                         data[index] = val
         return data
-    
-    def __repr__(self):
+
+    def __repr__(self) -> str:
         return '%s(%r)' % (self.__class__.__name__, self.expressions)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '[?%s]' % self.expressions
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return (isinstance(other, Filter)
                 and self.expressions == other.expressions)
 
@@ -88,18 +90,18 @@ class Filter(JSONPath):
 class Expression(JSONPath):
     """The JSONQuery expression"""
 
-    def __init__(self, target, op, value):
+    def __init__(self, target, op: Optional[str], value):
         self.target = target
         self.op = op
         self.value = value
 
-    def find(self, datum):
+    def find(self, datum) -> List[DatumInContext]:
         datum = self.target.find(DatumInContext.wrap(datum))
 
         if not datum:
             return []
         if self.op is None:
-            return datum
+            return [datum]
 
         found = []
         for data in datum:
@@ -120,20 +122,20 @@ class Expression(JSONPath):
 
         return found
 
-    def __eq__(self, other):
+    def __eq__(self, other: Any) -> bool:
         return (isinstance(other, Expression) and
                 self.target == other.target and
                 self.op == other.op and
                 self.value == other.value)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if self.op is None:
             return '%s(%r)' % (self.__class__.__name__, self.target)
         else:
             return '%s(%r %s %r)' % (self.__class__.__name__,
                                      self.target, self.op, self.value)
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.op is None:
             return '%s' % self.target
         else:

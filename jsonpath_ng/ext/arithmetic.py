@@ -12,6 +12,9 @@
 # under the License.
 
 import operator
+
+from typing import List
+
 from .. import JSONPath, DatumInContext
 
 
@@ -24,12 +27,12 @@ OPERATOR_MAP = {
 
 
 class Operation(JSONPath):
-    def __init__(self, left, op, right):
+    def __init__(self, left, op: str, right):
         self.left = left
         self.op = OPERATOR_MAP[op]
         self.right = right
 
-    def find(self, datum):
+    def find(self, datum) -> List[DatumInContext]:
         result = []
         if (isinstance(self.left, JSONPath)
                 and isinstance(self.right, JSONPath)):
@@ -64,9 +67,9 @@ class Operation(JSONPath):
                 return []
         return [DatumInContext.wrap(r) for r in result]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '%s(%r%s%r)' % (self.__class__.__name__, self.left, self.op,
                                self.right)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '%s%s%s' % (self.left, self.op, self.right)

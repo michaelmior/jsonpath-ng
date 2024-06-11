@@ -644,7 +644,7 @@ class Index(JSONPath):
     """
 
     def __init__(self, index):
-        self.index = index
+        self.index = int(index)
 
     def find(self, datum):
         return self._find_base(datum, create=False)
@@ -728,8 +728,16 @@ class Slice(JSONPath):
     so this is the compromise.
     """
     def __init__(self, start=None, end=None, step=None):
+        if start is not None:
+            start = int(start)
         self.start = start
+
+        if end is not None:
+            end = int(end)
         self.end = end
+
+        if step is not None:
+            step = int(step)
         self.step = step
 
     def find(self, datum):
